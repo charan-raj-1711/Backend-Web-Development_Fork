@@ -33,6 +33,11 @@ function unauthenticated(res) {
   });
 }
 
+function clearSessionCookie(res) {
+  const { maxAge, signed, ...clearOptions } = cookieOptions;
+  res.clearCookie(COOKIE_NAME, clearOptions);
+}
+
 router.post('/login', async (req, res, next) => {
   try {
     const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : '';
@@ -43,10 +48,11 @@ router.post('/login', async (req, res, next) => {
     }
 
     const user = await userRepository.findUserByEmail(email);
-    // Compare even for an unknown email to keep the response shape and avoid a quick user lookup path.
+    // Keep unknown-email failures on a password-comparison path too.
+    const dummyPasswordHash = '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy';
     const passwordMatches = await bcrypt.compare(
       password,
-      user ? user.passwordHash : '$2a$10$C6UzMDM.H6dfI/f/IKcEe.5V6Qw6iT7zv4yYv6QhK6uYJ5n9yV5aK'
+      user ? user.passwordHash : dummyPasswordHash
     );
 
     if (!user || !passwordMatches) return unauthenticated(res);
@@ -67,7 +73,7 @@ router.get('/me', requireSession, async (req, res, next) => {
     const user = await userRepository.findUserById(req.session.userId);
     if (!user) {
       sessionStore.destroySession(req.sessionId);
-      res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: undefined });
+      clearSessionCookie(res);
       return res.status(401).json({
         error: { code: 'UNAUTHENTICATED', message: 'Authentication required' },
       });
@@ -86,13 +92,7 @@ router.post('/logout', (req, res, next) => {
       sessionStore.destroySession(sessionId);
     }
 
-    res.clearCookie(COOKIE_NAME, {
-      httpOnly: cookieOptions.httpOnly,
-      secure: cookieOptions.secure,
-      sameSite: cookieOptions.sameSite,
-      signed: cookieOptions.signed,
-      path: cookieOptions.path,
-    });
+    clearSessionCookie(res);
     return res.status(204).end();
   } catch (error) {
     next(error);
