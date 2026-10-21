@@ -12,7 +12,7 @@ async function register(fields){
         !fields.password.trim()
     ) {
         const error = new Error('Name, email and password are required');
-        error.statusCode = 409;
+        error.statusCode = 400;
         throw error;
     }
 
