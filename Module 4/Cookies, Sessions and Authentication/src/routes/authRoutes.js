@@ -79,6 +79,7 @@ router.get('/me', requireSession, async (req, res, next) => {
     });
 
     if(!user){
+      sessionStore.destroy(req.signedCookies.sid);
       return res.status(401).json({
         error:{
           code: UNAUTHORIZED,
@@ -112,7 +113,7 @@ router.post('/logout', async (req, res, next) => {
       path: cookieOptions.path,
     });
 
-    return res.status(200).json({
+    return res.status(204).json({
       data: {
         message: 'Logged out successfully',
       },
