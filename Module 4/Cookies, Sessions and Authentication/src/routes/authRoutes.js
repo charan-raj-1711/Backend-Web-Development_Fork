@@ -1,7 +1,7 @@
 const express = require('express');
 
 const bcrypt = require('bcryptjs');
-const prisma = require('../db/prisma');
+// const prisma = require('../db/prisma');
 const sessionStore = require('../session/sessionStore');
 const requireSession = require('../middleware/requireSession');
 
