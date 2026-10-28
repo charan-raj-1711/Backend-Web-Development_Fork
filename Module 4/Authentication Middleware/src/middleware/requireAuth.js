@@ -34,13 +34,10 @@ const AUTH_ERROR = {
 
 module.exports = function requireAuth(req, res, next) {
   // Replace this with your implementation:
-   const authorization = req.get('Authorization');
+   const authorization = req.get('Authorization') || '';
 
   // Require the exact "Bearer <token>" format.
-  const match =
-    typeof authorization === 'string'
-      ? authorization.match(/^Bearer ([^\s]+)$/)
-      : null;
+  const match = authorization.match(/^Bearer ([^\s]+)$/);
 
   if (!match) {
     return res.status(401).json(AUTH_ERROR);
