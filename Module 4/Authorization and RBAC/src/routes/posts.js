@@ -66,7 +66,7 @@ router.delete('/:id', (req, res) => {
     });
   }
 
-  const isOwner = posts.authorId === req.user.id;
+  const isOwner = posts[idx].authorId === req.user.id;
   const isPreviledged = ['moderator','admin'].includes(req.user.role);
 
   if(!isOwner && !isPreviledged) {
