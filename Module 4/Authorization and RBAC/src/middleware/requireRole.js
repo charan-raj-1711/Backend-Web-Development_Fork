@@ -20,16 +20,18 @@ module.exports = function requireRole(...allowedRoles) {
     if(!req.user) {
       return res.status(401).json({ 
         error: {
-          code: 'UNAUTHENTICATED'
-        }
+          code: 'UNAUTHENTICATED',
+          message: 'Authentication required',
+        },
       });
     }
 
     if(!allowedRoles.includes(req.user.role)) {
       return res.status(403).json({
         error: {
-          code: 'FORBIDDEN'
-        }
+          code: 'FORBIDDEN',
+          message: 'You do not permission to perform this action',
+        },
       });
     }
     next();

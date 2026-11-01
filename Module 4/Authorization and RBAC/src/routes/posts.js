@@ -43,8 +43,9 @@ router.patch('/:id', (req, res) => {
   if(!isOwner && !isPreviledged) {
     return res.status(403).json({
       error: {
-        code:'FORBIDDEN'
-      }
+        code:'FORBIDDEN',
+        message: 'You do not have permission to edit this post',
+      },
     });
   }
   post.title = req.body?.title ?? post.title;
@@ -60,7 +61,7 @@ router.delete('/:id', (req, res) => {
     return res.status(404).json({
       error: {
         code: 'NOT_FOUND', 
-        message: 'User not found'
+        message: 'Post not found'
       }
     });
   }
@@ -71,8 +72,9 @@ router.delete('/:id', (req, res) => {
   if(!isOwner && !isPreviledged) {
     return res.status(403).json({
       error: {
-        code:'FORBIDDEN'
-      }
+        code:'FORBIDDEN',
+        message: 'You do not have permission to delete this post',
+      },
     });
   }
 
