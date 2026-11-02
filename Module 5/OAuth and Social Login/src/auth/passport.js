@@ -85,7 +85,6 @@ async function verifyCallback(accessToken, refreshToken, profile, done) {
   } catch(error) {
     return done(error);
   }
-  return done(null, false);
 }
 
 passport.use(
