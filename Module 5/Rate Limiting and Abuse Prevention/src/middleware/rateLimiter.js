@@ -23,4 +23,43 @@
 //   const rateLimit = require('express-rate-limit');
 //   module.exports = rateLimit({ ...options });
 
-module.exports = (req, res, next) => next(); // TODO: replace this stub
+// module.exports = (req, res, next) => next(); // TODO: replace this stub
+
+const { rateLimit } = require('express-rate-limit');
+
+const authLimiter = rateLimit({
+  // Allow 5 attempts within 15 minutes per IP address
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+
+  // Use standard rate-limit headers
+  standardHeaders: true,
+  legacyHeaders: false,
+
+  // Do not count successful requests
+  skipSuccessfulRequests: true,
+
+  // Return 429 with the Retry-After header
+  handler: (req, res, next, options) => {
+    const resetTime = req.rateLimit?.resetTime;
+
+    const retryAfter = resetTime
+      ? Math.max(1, Math.ceil((resetTime.getTime() - Date.now()) / 1000))
+      : Math.ceil(options.windowMs / 1000);
+
+    res.setHeader('Retry-After', String(retryAfter));
+
+    res.status(429).json({
+      message: 'Too many requests. Please try again later.',
+    });
+  },
+
+  // In a multi-instance deployment, use rate-limit-redis as the
+  // rate limiter's shared store. All application instances should
+  // connect to the same Redis database so they share rate-limit
+  // counters. The default in-memory store is not sufficient because
+  // each instance maintains separate counters, allowing requests
+  // distributed by a load balancer to bypass the intended limit.
+});
+
+module.exports = authLimiter;
