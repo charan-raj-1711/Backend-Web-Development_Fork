@@ -31,11 +31,11 @@ function initSocket(httpServer) {
     //         'commentAdded' with that data to everyone in data.room
     //         (use io.to(data.room).emit(), not io.emit())
     socket.on('newComment', (data) => {
-      io.to(data.room).emit('CommentAdded', data);
+      io.to(data.room).emit('commentAdded', data);
     });
 
     // TODO 5: listen for 'disconnect', log: [-] disconnected: <socket.id> (<reason>)
-    socket.on('disconnet', (reason) => {
+    socket.on('disconnect', (reason) => {
       console.log(`[-] disconnected: ${socket.id} (${reason})`); 
     });
   });
