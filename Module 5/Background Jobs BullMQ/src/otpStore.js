@@ -58,7 +58,8 @@ function verifyOTP(email, code) {
   }
 
   // 2. Check whether the OTP has expired.
-  if (Date.now() > record.expiresAt) {
+  if (Date.now() >= record.expiresAt) {
+    store.delete(email);
     return { ok: false, reason: 'expired'};
   }
 
@@ -70,7 +71,7 @@ function verifyOTP(email, code) {
   // 4. Check whether the submitted code is incorrect.
   if(record.otp !== code) {
     record.attempts += 1;
-    return { ok: false, reason: ' wrong_code'};
+    return { ok: false, reason: 'wrong_code'};
   }
 
   // 5. Correct OTP: delete it so it cannot be reused.

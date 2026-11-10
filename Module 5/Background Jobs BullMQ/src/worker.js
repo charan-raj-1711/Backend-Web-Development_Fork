@@ -19,12 +19,12 @@ const worker = new Worker(
     'email',
     async (job) => {
         if(job.name === 'otp') {
-            const { email, otp } = job.data;
+            const { to, otp } = job.data;
 
             await transporter.sendMail({
-                to: email,
+                to,
                 subject: 'Email Verification OTP',
-                text: `Your verification OTP is ${otp}. It is valid for 10 minutes.1`,
+                text: `Your verification OTP is ${otp}. It is valid for 10 minutes.`,
             });
         }
     },
@@ -35,6 +35,11 @@ const worker = new Worker(
 
 worker.on('completed', (job) => {
     console.log(`Job ${job.id} completed`);
+});
+
+// Log failed jobs.
+worker.on('failed', (job, error) => {
+    console.log(`Job ${job?.id} failed: ${error.message}`);
 });
 
 module.exports = worker;
