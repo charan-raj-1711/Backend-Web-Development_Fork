@@ -11,3 +11,30 @@
 //     Returning without throwing → job completed.
 
 // TODO: implement
+const { Worker } = require('bullmq');
+const { connection } = require('./queue');
+const { transporter } = require('./email');
+
+const worker = new Worker(
+    'email',
+    async (job) => {
+        if(job.name === 'otp') {
+            const { email, otp } = job.data;
+
+            await transporter.sendMail({
+                to: email,
+                subject: 'Email Verification OTP',
+                text: `Your verification OTP is ${otp}. It is valid for 10 minutes.1`,
+            });
+        }
+    },
+    {
+        connection,
+    }
+);
+
+worker.on('completed', (job) => {
+    console.log(`Job ${job.id} completed`);
+});
+
+module.exports = worker;
