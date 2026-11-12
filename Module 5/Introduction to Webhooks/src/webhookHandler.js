@@ -24,10 +24,75 @@ const { handleEvent } = require('./eventHandlers');
 
 // TODO: implement
 
+const crypto = require('crypto');
+
 const _processedIds = new Set();
 
 async function handleWebhook(req, res) {
-  res.status(501).json({ error: 'not implemented' });
+  // 1. Get the signature and secret
+  const signature = req.headers['x-webhook-signature'];
+  const secret = process.env.WEBHOOK_SECRET;
+
+  // Reject missing signature or secret
+  if(!signature || !secret || !Buffer.isBuffer(req.body)) {
+    return res.status(401).json({ error: 'Invalid signature' });
+  }
+
+  // 2. Calculate HMAC-SHA256 using the original request Buffer
+  const expectedSignature = crypto
+    .createHmac('sha256', secret)
+    .update(req.body)
+    .digest('hex');
+
+  // Remove the sha256= prefix
+  const receivedHex = signature.startsWith('sha256=')
+  ? signature.slice(7)
+  : '';
+
+  // Convert signatures into Buffers
+  const expectedBuffer = Buffer.from(expectedSignature, 'hex');
+  const receivedBuffer = Buffer.from(receivedHex, 'hex');
+
+  // Check lengths before timingSafeEqual to prevent errors
+  if(
+    receivedBuffer.length !== expectedBuffer.length ||
+    !/^[a-fA-F0-9]{64}$/.test(receivedHex) ||
+    !crypto.timingSafeEqual(expectedBuffer, receivedBuffer)
+  ) {
+    return res.status(401).json({ erro: 'Invalid signature' });
+  }
+
+  // 3. Parse the body only after signature verification
+  let event;
+
+  try {
+    event = JSON.parse(req.body.toString('utf8'));
+  } catch(error) {
+    return res.status(400).json({ error: 'Invalid JSON body'});
+  }
+
+  // 4. Check whether this event was already processed
+  if(_processedIds.has(event.id)) {
+    return res.status(200).json({ status: 'already_processed'});
+  }
+
+  // 5. Mark the event before processing it
+  _processedIds.add(event.id);
+
+  // 6. Acknowledge the webhook immediately
+  res.status(200).json({ status: 'received'});
+
+  // 7. Process the event after sending the response
+  setImmediate(() => {
+    try {
+      Promise.resolve(handleEvent(event)).catch((error => {
+        console.error('Webhook processing failed:', error);
+      }));
+    } catch(error) {
+      console.error('Webhook processing failed:', error);
+    }
+  });
+  // res.status(501).json({ error: 'not implemented' });
 }
 
 module.exports = { handleWebhook, _processedIds };
